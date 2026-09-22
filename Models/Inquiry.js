@@ -34,7 +34,6 @@ const inquirySchema = new mongoose.Schema(
     },
     repliedMessage: {
       type: String,
-      required: [true, "Message content is required"],
       trim: true,
     },
   },
