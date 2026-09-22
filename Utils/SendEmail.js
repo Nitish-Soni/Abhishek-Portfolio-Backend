@@ -112,8 +112,7 @@ const sendReplyEmail = async (params) => {
   const recipientName =
     params.recipientName || params.inquiry?.name || "Reader";
   const originalSubject =
-    params.inquiry?.subject + "|" + params.inquiry?.inquiryType;
-  params.originalSubject || params.inquiry?.subject || "Your Inquiry";
+    params.originalSubject || params.inquiry?.subject || "Your Inquiry";
   const inquiryType =
     params.inquiryType || params.inquiry?.inquiryType || "General Inquiry";
 
@@ -151,7 +150,7 @@ https://2nison6.com`;
     subject: params.subject || `Re: ${originalSubject}`,
     text: plainTextMessage,
     html: renderEmailWrapper({
-      preheader: `Abhishek Kabra - ${originalSubject}`,
+      preheader: `Re: ${originalSubject}`,
       contentHtml: bodyHtml,
     }),
   });
@@ -191,7 +190,7 @@ const sendWelcomeEmail = async (toEmail) => {
     to: toEmail,
     subject: "Welcome to The Dispatch | Reader Subscription Confirmed",
     html: renderEmailWrapper({
-      preheader: "Abhishek Kabra - Welcome to The Dispatch",
+      preheader: "Welcome to The Dispatch by Abhishek Kabra",
       contentHtml: bodyHtml,
     }),
   });
@@ -219,8 +218,7 @@ const sendUnsubscribeEmail = async (toEmail) => {
     to: toEmail,
     subject: "Subscription Cancelled | The Dispatch",
     html: renderEmailWrapper({
-      preheader:
-        "Abhishek Kabra - You have been unsubscribed from The Dispatch",
+      preheader: "You have been unsubscribed from The Dispatch",
       contentHtml: bodyHtml,
     }),
   });
@@ -256,7 +254,7 @@ const sendNewPostBroadcast = async ({
 
   return await sendEmail({
     to: toEmails,
-    subject: `Abhishek Kabra - New Dispatch: ${postTitle}`,
+    subject: `New Dispatch: ${postTitle}`,
     html: renderEmailWrapper({
       preheader: `New Essay: ${postTitle}`,
       contentHtml: bodyHtml,
