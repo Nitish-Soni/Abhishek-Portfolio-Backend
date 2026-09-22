@@ -8,10 +8,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  */
 const sendEmail = async ({ to, subject, html, text }) => {
   try {
-    // Note: Until you verify your custom domain on Resend,
-    // use 'onboarding@resend.dev' as the sender address.
+    // Uses your verified custom domain email by default
     const fromAddress =
-      process.env.EMAIL_FROM || "Abhishek Kabra <onboarding@resend.dev>";
+      process.env.EMAIL_FROM || "Abhishek Kabra <nitish.soni@2nison6.com>";
 
     const response = await resend.emails.send({
       from: fromAddress,
