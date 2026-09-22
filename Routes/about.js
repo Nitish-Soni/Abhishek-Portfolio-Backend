@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const About = require("../Models/About");
-const verifyAdmin = require("../Middleware/auth");
+const verifyAdmin = require("../Middleware/Auth");
 
 // Default initial payload
 const DEFAULT_ABOUT_DATA = {

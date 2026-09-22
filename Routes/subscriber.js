@@ -1,8 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const Subscriber = require("../Models/Subscriber");
-const { sendWelcomeEmail } = require("../Utils/sendEmail");
-const verifyAdmin = require("../Middleware/auth");
+const {
+  sendWelcomeEmail,
+  sendUnsubscribeEmail,
+} = require("../Utils/SendEmail");
+const verifyAdmin = require("../Middleware/Auth");
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -84,6 +87,13 @@ router.post("/unsubscribe", async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return res
+        .status(400)
+        .json({ message: "Please provide a valid email address." });
+    }
+
     const subscriber = await Subscriber.findOne({ email: cleanEmail });
 
     if (!subscriber || !subscriber.isActive) {
@@ -94,6 +104,11 @@ router.post("/unsubscribe", async (req, res) => {
 
     subscriber.isActive = false;
     await subscriber.save();
+
+    // Trigger unsubscribe confirmation email asynchronously
+    sendUnsubscribeEmail(cleanEmail).catch((err) =>
+      console.error("Failed to send unsubscribe email:", err.message),
+    );
 
     return res.status(200).json({
       success: true,
@@ -122,7 +137,7 @@ router.get("/subscribers", verifyAdmin, async (req, res) => {
   }
 });
 
-// DELETE /api/newsletter/subscribers/:id - Protected Admin
+// DELETE /api/newsletter/subscribers/:id - Protected Admin (Removes or Unsubscribes by Admin)
 router.delete("/subscribers/:id", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -131,6 +146,11 @@ router.delete("/subscribers/:id", verifyAdmin, async (req, res) => {
     if (!deletedSubscriber) {
       return res.status(404).json({ message: "Subscriber not found." });
     }
+
+    // Trigger unsubscribe/removal notification email asynchronously
+    sendUnsubscribeEmail(deletedSubscriber.email).catch((err) =>
+      console.error("Failed to send admin removal email:", err.message),
+    );
 
     return res.status(200).json({
       success: true,

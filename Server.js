@@ -21,10 +21,10 @@ app.use(
 app.use(express.json());
 
 // Import Routes
-const adminRoutes = require("./Routes/admin");
-const aboutRoutes = require("./Routes/about");
-const inquiryRoutes = require("./Routes/inquiry");
-const subscriberRoutes = require("./Routes/subscriber"); // Added Subscriber routes
+const adminRoutes = require("./Routes/Admin");
+const aboutRoutes = require("./Routes/About");
+const inquiryRoutes = require("./Routes/Inquiry");
+const subscriberRoutes = require("./Routes/Subscriber"); // Added Subscriber routes
 
 // Mount Routes
 app.use("/api/admin", adminRoutes);

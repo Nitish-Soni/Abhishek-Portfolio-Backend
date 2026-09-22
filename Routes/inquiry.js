@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Inquiry = require("../Models/Inquiry");
 const InquiryType = require("../Models/InquiryType");
-const verifyAdmin = require("../Middleware/auth");
+const verifyAdmin = require("../Middleware/Auth");
+const { sendReplyEmail } = require("../Utils/SendEmail");
 
 const DEFAULT_INQUIRY_TYPES = [
   "Editorial / Writing Assignment",
@@ -98,6 +99,45 @@ router.get("/", verifyAdmin, async (req, res) => {
     return res
       .status(500)
       .json({ error: "Failed to fetch inquiries", details: err.message });
+  }
+});
+
+// POST /api/inquiry/:id/reply - Protected: Reply to an inquiry message via email
+router.post("/:id/reply", verifyAdmin, async (req, res) => {
+  try {
+    const { replyText } = req.body;
+    if (!replyText || !replyText.trim()) {
+      return res.status(400).json({ error: "Reply text is required." });
+    }
+
+    const inquiry = await Inquiry.findById(req.params.id);
+    if (!inquiry) {
+      return res.status(404).json({ error: "Inquiry message not found." });
+    }
+
+    // Trigger reply email dispatch asynchronously
+    sendReplyEmail({
+      to: inquiry.email,
+      originalSubject: inquiry.subject,
+      replyText: replyText.trim(),
+      recipientName: inquiry.name,
+    }).catch((err) =>
+      console.error("Failed to send reply email:", err.message),
+    );
+
+    inquiry.status = "Replied";
+    await inquiry.save();
+
+    return res.json({
+      success: true,
+      message: "Reply sent successfully.",
+      inquiry,
+    });
+  } catch (err) {
+    console.error("Error replying to inquiry:", err);
+    return res
+      .status(500)
+      .json({ error: "Failed to process reply.", details: err.message });
   }
 });
 
