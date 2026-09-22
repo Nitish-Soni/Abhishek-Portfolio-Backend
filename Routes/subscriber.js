@@ -1,9 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const Subscriber = require("../Models/Subscriber");
-const { sendWelcomeEmail } = require("../Utils/sendEmail"); // Imported email utility
+const { sendWelcomeEmail } = require("../Utils/sendEmail");
+const verifyAdmin = require("../Middleware/auth");
 
-// POST /api/newsletter/subscribe
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/* ==========================================================================
+   PUBLIC ROUTES
+   ========================================================================== */
+
+// POST /api/newsletter/subscribe - Public
 router.post("/subscribe", async (req, res) => {
   try {
     const { email } = req.body;
@@ -12,6 +19,13 @@ router.post("/subscribe", async (req, res) => {
     }
 
     const cleanEmail = email.toLowerCase().trim();
+
+    if (!EMAIL_REGEX.test(cleanEmail)) {
+      return res
+        .status(400)
+        .json({ message: "Please provide a valid email address." });
+    }
+
     const existingSubscriber = await Subscriber.findOne({ email: cleanEmail });
 
     if (existingSubscriber) {
@@ -40,9 +54,9 @@ router.post("/subscribe", async (req, res) => {
     const newSubscriber = new Subscriber({ email: cleanEmail });
     await newSubscriber.save();
 
-    // Trigger Zoho automated email asynchronously
+    // Trigger automated email asynchronously
     sendWelcomeEmail(cleanEmail).catch((err) =>
-      console.error("Zoho Email Dispatch Error:", err.message),
+      console.error("Email Dispatch Error:", err.message),
     );
 
     return res.status(201).json({
@@ -50,12 +64,18 @@ router.post("/subscribe", async (req, res) => {
       message: "Thank you for subscribing to the dispatch!",
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(200).json({
+        success: true,
+        message: "You are already subscribed to the newsletter!",
+      });
+    }
     console.error("Error subscribing to newsletter:", error);
     return res.status(500).json({ message: "Server error. Please try again." });
   }
 });
 
-// POST /api/newsletter/unsubscribe
+// POST /api/newsletter/unsubscribe - Public
 router.post("/unsubscribe", async (req, res) => {
   try {
     const { email } = req.body;
@@ -85,8 +105,12 @@ router.post("/unsubscribe", async (req, res) => {
   }
 });
 
-// GET /api/newsletter/subscribers (Admin)
-router.get("/subscribers", async (req, res) => {
+/* ==========================================================================
+   PROTECTED ADMIN ROUTES (Requires verifyAdmin Middleware)
+   ========================================================================== */
+
+// GET /api/newsletter/subscribers - Protected Admin
+router.get("/subscribers", verifyAdmin, async (req, res) => {
   try {
     const subscribers = await Subscriber.find().sort({ createdAt: -1 });
     return res.status(200).json(subscribers);
@@ -98,8 +122,8 @@ router.get("/subscribers", async (req, res) => {
   }
 });
 
-// DELETE /api/newsletter/subscribers/:id (Admin)
-router.delete("/subscribers/:id", async (req, res) => {
+// DELETE /api/newsletter/subscribers/:id - Protected Admin
+router.delete("/subscribers/:id", verifyAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const deletedSubscriber = await Subscriber.findByIdAndDelete(id);

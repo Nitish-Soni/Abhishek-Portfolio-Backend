@@ -28,10 +28,25 @@ router.get("/options", async (req, res) => {
         ? typesFromDb.map((doc) => doc.name)
         : DEFAULT_INQUIRY_TYPES;
 
-    res.json({ inquiryTypes });
+    return res.json({ inquiryTypes });
   } catch (err) {
     console.error("Error fetching inquiry options:", err);
-    res.json({ inquiryTypes: DEFAULT_INQUIRY_TYPES });
+    return res.json({ inquiryTypes: DEFAULT_INQUIRY_TYPES });
+  }
+});
+
+// GET /api/inquiry/types/public - Public: Alias matching PublicAPI.getInquiryTypes()
+router.get("/types/public", async (req, res) => {
+  try {
+    const types = await InquiryType.find().sort({ createdAt: 1 });
+    return res.json(
+      types.length > 0
+        ? types
+        : DEFAULT_INQUIRY_TYPES.map((name) => ({ name })),
+    );
+  } catch (err) {
+    console.error("Error fetching public inquiry types:", err);
+    return res.json(DEFAULT_INQUIRY_TYPES.map((name) => ({ name })));
   }
 });
 
@@ -47,23 +62,23 @@ router.post("/", async (req, res) => {
     }
 
     const newInquiry = new Inquiry({
-      name,
-      email,
-      inquiryType: inquiryType || "General Inquiry",
-      subject,
-      message,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      inquiryType: inquiryType ? inquiryType.trim() : "General Inquiry",
+      subject: subject.trim(),
+      message: message.trim(),
     });
 
     await newInquiry.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Inquiry submitted successfully!",
       inquiry: newInquiry,
     });
   } catch (err) {
     console.error("Error saving inquiry:", err);
-    res.status(500).json({
+    return res.status(500).json({
       error: "Failed to process inquiry. Please try again later.",
       details: err.message,
     });
@@ -78,9 +93,9 @@ router.post("/", async (req, res) => {
 router.get("/", verifyAdmin, async (req, res) => {
   try {
     const inquiries = await Inquiry.find().sort({ createdAt: -1 });
-    res.json(inquiries);
+    return res.json(inquiries);
   } catch (err) {
-    res
+    return res
       .status(500)
       .json({ error: "Failed to fetch inquiries", details: err.message });
   }
@@ -106,9 +121,9 @@ router.patch("/:id/status", verifyAdmin, async (req, res) => {
       return res.status(404).json({ error: "Inquiry message not found." });
     }
 
-    res.json(updatedInquiry);
+    return res.json(updatedInquiry);
   } catch (err) {
-    res
+    return res
       .status(500)
       .json({ error: "Failed to update inquiry status", details: err.message });
   }
@@ -121,9 +136,9 @@ router.delete("/:id", verifyAdmin, async (req, res) => {
     if (!deletedInquiry) {
       return res.status(404).json({ error: "Inquiry message not found." });
     }
-    res.json({ message: "Inquiry deleted successfully" });
+    return res.json({ message: "Inquiry deleted successfully" });
   } catch (err) {
-    res
+    return res
       .status(500)
       .json({ error: "Failed to delete inquiry", details: err.message });
   }
@@ -133,9 +148,9 @@ router.delete("/:id", verifyAdmin, async (req, res) => {
 router.get("/types", verifyAdmin, async (req, res) => {
   try {
     const types = await InquiryType.find().sort({ createdAt: 1 });
-    res.json(types);
+    return res.json(types);
   } catch (err) {
-    res
+    return res
       .status(500)
       .json({ error: "Failed to fetch inquiry options", details: err.message });
   }
@@ -152,14 +167,14 @@ router.post("/types", verifyAdmin, async (req, res) => {
     const newType = new InquiryType({ name: name.trim() });
     await newType.save();
 
-    res.status(201).json(newType);
+    return res.status(201).json(newType);
   } catch (err) {
     if (err.code === 11000) {
       return res
         .status(400)
         .json({ error: "This inquiry type already exists." });
     }
-    res
+    return res
       .status(500)
       .json({ error: "Failed to add inquiry option", details: err.message });
   }
@@ -172,9 +187,9 @@ router.delete("/types/:id", verifyAdmin, async (req, res) => {
     if (!deletedType) {
       return res.status(404).json({ error: "Inquiry type option not found." });
     }
-    res.json({ message: "Inquiry option deleted successfully" });
+    return res.json({ message: "Inquiry option deleted successfully" });
   } catch (err) {
-    res
+    return res
       .status(500)
       .json({ error: "Failed to delete inquiry option", details: err.message });
   }
