@@ -1,61 +1,37 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
-// Cloud-optimized Transporter for Render (Port 465 SSL)
-const port = parseInt(process.env.EMAIL_PORT, 10) || 465;
-
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtppro.zoho.in",
-  port: port,
-  secure: port === 465, // EXPLICITLY set true for port 465 (SSL)
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  connectionTimeout: 10000, // 10s connection timeout limit
-  family: 4, // FORCE IPv4 (Bypasses Render IPv6 hangs)
-});
-
-// Verify SMTP connection on server startup
-transporter.verify((error) => {
-  if (error) {
-    console.error("❌ Zoho Connection Detailed Diagnostic Error:");
-    console.error({
-      message: error.message,
-      code: error.code, // e.g., 'EAUTH', 'ETIMEDOUT', 'ESOCKET'
-      command: error.command, // e.g., 'CONN', 'AUTH PLAIN'
-      response: error.response, // Raw SMTP response code & string from Zoho
-      responseCode: error.responseCode,
-    });
-  } else {
-    console.log(`✅ Zoho SMTP Connected Successfully (${port} SSL)!`);
-  }
-});
-
-// Verify SMTP connection on server startup
-transporter.verify((error) => {
-  if (error) {
-    console.error("❌ Zoho Connection Error:", error.message);
-  } else {
-    console.log("✅ Zoho SMTP Connected Successfully (465 SSL)!");
-  }
-});
+// Initialize Resend with your API key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /**
- * Universal Email Dispatcher
+ * Universal Email Dispatcher via Resend HTTP API
  */
 const sendEmail = async ({ to, subject, html, text }) => {
-  const mailOptions = {
-    from: `<${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    html: html || text,
-    text,
-  };
+  try {
+    // Note: Until you verify your custom domain on Resend,
+    // use 'onboarding@resend.dev' as the sender address.
+    const fromAddress =
+      process.env.EMAIL_FROM || "Abhishek Kabra <onboarding@resend.dev>";
 
-  return await transporter.sendMail(mailOptions);
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html: html || text,
+      text,
+    });
+
+    if (response.error) {
+      console.error("❌ Resend API Error:", response.error);
+      throw new Error(response.error.message);
+    }
+
+    console.log("✉️ Email sent via Resend successfully! ID:", response.data.id);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Email Dispatch Failure Details:", error.message);
+    throw error;
+  }
 };
 
 /* ==========================================================================
@@ -250,8 +226,6 @@ const sendNewPostBroadcast = async ({
   postSnippet,
   postUrl,
 }) => {
-  const recipients = Array.isArray(toEmails) ? toEmails.join(",") : toEmails;
-
   const bodyHtml = `
     <div style="margin-bottom: 12px;">
       <span style="display: inline-block; background-color: rgba(204, 58, 99, 0.15); border: 1px solid rgba(204, 58, 99, 0.3); color: #cc3a63; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 12px;">
@@ -272,7 +246,7 @@ const sendNewPostBroadcast = async ({
   `;
 
   return await sendEmail({
-    to: recipients,
+    to: toEmails,
     subject: `New Post: ${postTitle}`,
     html: renderEmailWrapper({
       preheader: `New Post: ${postTitle}`,
