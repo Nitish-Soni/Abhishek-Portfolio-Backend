@@ -126,6 +126,7 @@ router.post("/:id/reply", verifyAdmin, async (req, res) => {
     });
 
     inquiry.status = "Replied";
+    inquiry.repliedMessage = replyText.trim();
     await inquiry.save();
 
     return res.json({

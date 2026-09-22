@@ -32,6 +32,11 @@ const inquirySchema = new mongoose.Schema(
       enum: ["New", "Read", "Replied", "Archived"],
       default: "New",
     },
+    repliedMessage: {
+      type: String,
+      required: [true, "Message content is required"],
+      trim: true,
+    },
   },
   { timestamps: true },
 );
