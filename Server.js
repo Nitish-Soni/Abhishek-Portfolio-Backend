@@ -9,12 +9,7 @@ const PORT = process.env.PORT || 5000;
 // Global Middleware
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "https://2nison6.com",
-      "https://www.2nison6.com",
-    ],
+    origin: ["http://localhost:5173", "https://abhishekkabra.2nison6.com"],
     credentials: true,
   }),
 );
