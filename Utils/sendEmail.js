@@ -273,7 +273,7 @@ const sendAutoReplyEmail = async ({ to, recipientName, subject }) => {
   const mailOptions = {
     from: `"Abhishek Kabra" <${process.env.EMAIL_USER}>`,
     to,
-    subject: `Re: [Inquiry Received] ${subject}`,
+    subject: `Abhishek Kabra | [Inquiry Received] | ${subject}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #18181b; color: #f4f4f5; padding: 25px; border-radius: 10px;">
         <h2 style="color: #cc3a63; margin-bottom: 20px;">Thank You for Reaching Out</h2>
