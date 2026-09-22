@@ -21,7 +21,14 @@ const transporter = nodemailer.createTransport({
 // Verify SMTP connection on server startup
 transporter.verify((error) => {
   if (error) {
-    console.error("❌ Zoho Connection Error:", error.message);
+    console.error("❌ Zoho Connection Detailed Diagnostic Error:");
+    console.error({
+      message: error.message,
+      code: error.code, // e.g., 'EAUTH', 'ETIMEDOUT', 'ESOCKET'
+      command: error.command, // e.g., 'CONN', 'AUTH PLAIN'
+      response: error.response, // Raw SMTP response code & string from Zoho
+      responseCode: error.responseCode,
+    });
   } else {
     console.log(`✅ Zoho SMTP Connected Successfully (${port} SSL)!`);
   }
