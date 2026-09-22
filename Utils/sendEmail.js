@@ -2,9 +2,9 @@ const nodemailer = require("nodemailer");
 
 // Cloud-optimized Transporter for Render (Port 465 SSL)
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || "smtppro.zoho.in",
-  port: parseInt(process.env.EMAIL_PORT, 10) || 465, // Defaults to 465 SSL
-  secure: true, // MUST be true for port 465 on Render/Cloud hosts
+  host: process.env.EMAIL_HOST || "smtp.zoho.in",
+  port: parseInt(process.env.EMAIL_PORT, 10) || 587, // Defaults to 587
+  secure: false, // MUST be false for port 587 on Render/Cloud hosts
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
