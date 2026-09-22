@@ -147,10 +147,13 @@ https://2nison6.com`;
 
   return await sendEmail({
     to,
-    subject: params.subject || `Re: ${originalSubject}`,
+    subject:
+      "Abhishek Kabra - " +
+      (params.subject || `${originalSubject}`) +
+      inquiryType,
     text: plainTextMessage,
     html: renderEmailWrapper({
-      preheader: `Re: ${originalSubject}`,
+      preheader: `Abhishek Kabra - ${originalSubject}`,
       contentHtml: bodyHtml,
     }),
   });

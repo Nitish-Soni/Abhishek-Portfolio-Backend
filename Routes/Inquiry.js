@@ -115,15 +115,15 @@ router.post("/:id/reply", verifyAdmin, async (req, res) => {
       return res.status(404).json({ error: "Inquiry message not found." });
     }
 
-    // Trigger reply email dispatch asynchronously
-    sendReplyEmail({
+    // Pass complete parameter set including inquiryType and the raw inquiry object
+    await sendReplyEmail({
       to: inquiry.email,
-      originalSubject: inquiry.subject,
-      replyText: replyText.trim(),
       recipientName: inquiry.name,
-    }).catch((err) =>
-      console.error("Failed to send reply email:", err.message),
-    );
+      originalSubject: inquiry.subject,
+      inquiryType: inquiry.inquiryType,
+      replyText: replyText.trim(),
+      inquiry,
+    });
 
     inquiry.status = "Replied";
     await inquiry.save();
