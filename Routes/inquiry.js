@@ -3,7 +3,7 @@ const router = express.Router();
 const Inquiry = require("../Models/Inquiry");
 const InquiryType = require("../Models/InquiryType");
 const verifyAdmin = require("../Middleware/Auth");
-const { sendReplyEmail } = require("../Utils/SendEmail");
+const { sendReplyEmail, sendAutoReplyEmail } = require("../Utils/SendEmail");
 
 const DEFAULT_INQUIRY_TYPES = [
   "Editorial / Writing Assignment",
@@ -51,7 +51,7 @@ router.get("/types/public", async (req, res) => {
   }
 });
 
-// POST /api/inquiry - Public: Submit contact inquiry message
+// POST /api/inquiry - Public: Submit contact inquiry message & auto-reply
 router.post("/", async (req, res) => {
   try {
     const { name, email, inquiryType, subject, message } = req.body;
@@ -71,6 +71,18 @@ router.post("/", async (req, res) => {
     });
 
     await newInquiry.save();
+
+    // Trigger confirmation email to the user (non-blocking catch)
+    try {
+      await sendAutoReplyEmail({
+        to: newInquiry.email,
+        recipientName: newInquiry.name,
+        subject: newInquiry.subject,
+      });
+    } catch (emailErr) {
+      console.error("Auto-reply email dispatch error:", emailErr);
+      // We don't block the request if the email dispatch fails
+    }
 
     return res.status(201).json({
       success: true,
@@ -115,7 +127,6 @@ router.post("/:id/reply", verifyAdmin, async (req, res) => {
       return res.status(404).json({ error: "Inquiry message not found." });
     }
 
-    // Pass complete parameter set including inquiryType and the raw inquiry object
     await sendReplyEmail({
       to: inquiry.email,
       recipientName: inquiry.name,

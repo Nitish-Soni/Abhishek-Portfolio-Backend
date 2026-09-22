@@ -268,10 +268,37 @@ const sendNewPostBroadcast = async ({
   });
 };
 
+// Function to send confirmation to user upon inquiry submission
+const sendAutoReplyEmail = async ({ to, recipientName, subject }) => {
+  const mailOptions = {
+    from: `"Abhishek Kabra" <${process.env.EMAIL_USER}>`,
+    to,
+    subject: `Re: [Inquiry Received] ${subject}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #18181b; color: #f4f4f5; padding: 25px; border-radius: 10px;">
+        <h2 style="color: #cc3a63; margin-bottom: 20px;">Thank You for Reaching Out</h2>
+        <p>Dear ${recipientName},</p>
+        <p>We have received your query regarding <strong>"${subject}"</strong>.</p>
+        <p style="background-color: #27272a; padding: 15px; border-left: 4px solid #cc3a63; border-radius: 4px; color: #e4e4e7;">
+          "Thank you for contacting us. We have received your query, and Abhishek Kabra will reach out to you soon."
+        </p>
+        <p style="margin-top: 25px; font-size: 0.9em; color: #a1a1aa;">
+          Warm regards,<br>
+          <strong>Team Abhishek Kabra</strong>
+        </p>
+      </div>
+    `,
+  };
+
+  // Dispatch email using nodemailer transporter or Resend
+  return await transporter.sendMail(mailOptions);
+};
+
 module.exports = {
   sendEmail,
   sendReplyEmail,
   sendWelcomeEmail,
   sendUnsubscribeEmail,
   sendNewPostBroadcast,
+  sendAutoReplyEmail,
 };
