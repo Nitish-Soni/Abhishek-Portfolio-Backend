@@ -268,30 +268,49 @@ const sendNewPostBroadcast = async ({
   });
 };
 
-// Function to send confirmation to user upon inquiry submission
+/* ==========================================================================
+   5. AUTOMATED CONFIRMATION EMAIL UPON INQUIRY SUBMISSION
+   ========================================================================== */
 const sendAutoReplyEmail = async ({ to, recipientName, subject }) => {
-  const mailOptions = {
-    from: `"Abhishek Kabra" <${process.env.EMAIL_USER}>`,
-    to,
-    subject: `Abhishek Kabra | [Inquiry Received] | ${subject}`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #18181b; color: #f4f4f5; padding: 25px; border-radius: 10px;">
-        <h2 style="color: #cc3a63; margin-bottom: 20px;">Thank You for Reaching Out</h2>
-        <p>Dear ${recipientName},</p>
-        <p>We have received your query regarding <strong>"${subject}"</strong>.</p>
-        <p style="background-color: #27272a; padding: 15px; border-left: 4px solid #cc3a63; border-radius: 4px; color: #e4e4e7;">
-          "Thank you for contacting us. We have received your query, and Abhishek Kabra will reach out to you soon."
-        </p>
-        <p style="margin-top: 25px; font-size: 0.9em; color: #a1a1aa;">
-          Warm regards,<br>
-          <strong>Team Abhishek Kabra</strong>
-        </p>
-      </div>
-    `,
-  };
+  const name = recipientName || "Reader";
+  const inquirySubject = subject || "Your Inquiry";
 
-  // Dispatch email using nodemailer transporter or Resend
-  return await transporter.sendMail(mailOptions);
+  const plainTextMessage = `Dear ${name},
+
+Thank you for contacting us. We have received your query regarding "${inquirySubject}", and Abhishek Kabra will reach out to you soon.
+
+Warm regards,
+Team Abhishek Kabra
+https://2nison6.com`;
+
+  const bodyHtml = `
+    <h2 style="font-size: 20px; font-weight: 600; color: #ffffff; margin: 0 0 16px 0; font-family: 'Georgia', serif;">Thank You for Reaching Out</h2>
+    <p style="margin-bottom: 16px; color: #e5e7eb;">Dear ${name},</p>
+    <p style="margin-bottom: 20px; color: #d1d5db; line-height: 1.7;">
+      We have received your query regarding <strong style="color: #ffffff;">"${inquirySubject}"</strong>.
+    </p>
+
+    <div style="background-color: #1a1b20; border-left: 3px solid #cc3a63; border-radius: 0 8px 8px 0; padding: 18px 20px; margin: 24px 0;">
+      <p style="margin: 0; font-size: 14px; color: #e5e7eb; font-style: italic; line-height: 1.6;">
+        "Thank you for contacting us. We have received your query, and Abhishek Kabra will reach out to you soon."
+      </p>
+    </div>
+
+    <p style="margin: 28px 0 0 0; font-size: 14px; color: #9ca3af;">
+      Warm regards,<br/>
+      <strong style="color: #ffffff; font-family: 'Georgia', serif;">Team Abhishek Kabra</strong>
+    </p>
+  `;
+
+  return await sendEmail({
+    to,
+    subject: `Abhishek Kabra | [Inquiry Received] | ${inquirySubject}`,
+    text: plainTextMessage,
+    html: renderEmailWrapper({
+      preheader: `Inquiry Received: ${inquirySubject}`,
+      contentHtml: bodyHtml,
+    }),
+  });
 };
 
 module.exports = {
