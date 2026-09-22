@@ -1,13 +1,30 @@
 const nodemailer = require("nodemailer");
 
 // Cloud-optimized Transporter for Render (Port 465 SSL)
+const port = parseInt(process.env.EMAIL_PORT, 10) || 465;
+
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT),
+  host: process.env.EMAIL_HOST || "smtppro.zoho.in",
+  port: port,
+  secure: port === 465, // EXPLICITLY set true for port 465 (SSL)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
+  connectionTimeout: 10000, // 10s connection timeout limit
+  family: 4, // FORCE IPv4 (Bypasses Render IPv6 hangs)
+});
+
+// Verify SMTP connection on server startup
+transporter.verify((error) => {
+  if (error) {
+    console.error("❌ Zoho Connection Error:", error.message);
+  } else {
+    console.log(`✅ Zoho SMTP Connected Successfully (${port} SSL)!`);
+  }
 });
 
 // Verify SMTP connection on server startup
@@ -24,7 +41,7 @@ transporter.verify((error) => {
  */
 const sendEmail = async ({ to, subject, html, text }) => {
   const mailOptions = {
-    from: `"Abhishek Kabra" <${process.env.EMAIL_USER}>`,
+    from: `<${process.env.EMAIL_USER}>`,
     to,
     subject,
     html: html || text,
