@@ -33,9 +33,14 @@ const sendEmail = async ({ to, subject, html, text }) => {
 };
 
 /* ==========================================================================
-   GLOBAL EMAIL WRAPPER (DARK GLASS / LITERARY BRANDED CARD)
+   GLOBAL EMAIL WRAPPER (DARK GLASS / LITERARY BRANDED CARD WITH UNSUBSCRIBE)
    ========================================================================== */
-const renderEmailWrapper = ({ preheader, contentHtml }) => {
+const renderEmailWrapper = ({ preheader, contentHtml, toEmail }) => {
+  const frontendUrl = process.env.FRONTEND_URL || "https://2nison6.com";
+  const unsubscribeUrl = `${frontendUrl}/unsubscribe?email=${encodeURIComponent(
+    toEmail || "",
+  )}`;
+
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -87,9 +92,14 @@ const renderEmailWrapper = ({ preheader, contentHtml }) => {
                   <p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">
                     Written & Published by <a href="https://2nison6.com" style="color: #9ca3af; text-decoration: underline;">Abhishek Kabra</a>
                   </p>
-                  <p style="margin: 0; font-size: 11px; color: #4b5563; line-height: 1.4;">
+                  <p style="margin: 0 0 10px 0; font-size: 11px; color: #4b5563; line-height: 1.4;">
                     You are receiving this correspondence regarding your inquiry or reader subscription on 2nison6.com.
                   </p>
+                  ${
+                    toEmail
+                      ? `<a href="${unsubscribeUrl}" style="color: #cc3a63; font-size: 11px; text-decoration: underline;">Unsubscribe from The Dispatch</a>`
+                      : ""
+                  }
                 </td>
               </tr>
 
@@ -103,10 +113,9 @@ const renderEmailWrapper = ({ preheader, contentHtml }) => {
 };
 
 /* ==========================================================================
-   1. INQUIRY REPLY EMAIL (AUTHORIAL CORRESPONDENCE)
+   1. INQUIRY REPLY EMAIL (ADMIN CORRESPONDENCE TO READER)
    ========================================================================== */
 const sendReplyEmail = async (params) => {
-  // Support both object signatures: destructured direct parameters or nested inquiry object
   const to = params.to || params.inquiry?.email;
   const replyText = params.replyText || "";
   const recipientName =
@@ -156,6 +165,7 @@ https://2nison6.com`;
     html: renderEmailWrapper({
       preheader: `${originalSubject}`,
       contentHtml: bodyHtml,
+      toEmail: to,
     }),
   });
 };
@@ -197,6 +207,7 @@ const sendWelcomeEmail = async (toEmail) => {
     html: renderEmailWrapper({
       preheader: "Welcome to The Dispatch by Abhishek Kabra",
       contentHtml: bodyHtml,
+      toEmail: toEmail,
     }),
   });
 };
@@ -226,6 +237,7 @@ const sendUnsubscribeEmail = async (toEmail) => {
       preheader:
         "You have been unsubscribed from The Dispatch by Abhishek Kabra",
       contentHtml: bodyHtml,
+      toEmail: null, // Omit unsubscribe link on the cancellation email
     }),
   });
 };
@@ -264,6 +276,7 @@ const sendNewPostBroadcast = async ({
     html: renderEmailWrapper({
       preheader: `New Essay: ${postTitle}`,
       contentHtml: bodyHtml,
+      toEmail: Array.isArray(toEmails) ? toEmails[0] : toEmails,
     }),
   });
 };
@@ -309,6 +322,7 @@ https://2nison6.com`;
     html: renderEmailWrapper({
       preheader: `Inquiry Received: ${inquirySubject}`,
       contentHtml: bodyHtml,
+      toEmail: to,
     }),
   });
 };

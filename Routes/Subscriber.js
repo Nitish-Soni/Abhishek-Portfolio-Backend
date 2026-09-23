@@ -82,41 +82,43 @@ router.post("/subscribe", async (req, res) => {
 router.post("/unsubscribe", async (req, res) => {
   try {
     const { email } = req.body;
+
     if (!email) {
-      return res.status(400).json({ message: "Email address is required." });
+      return res.status(400).json({ error: "Email address is required." });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
-    if (!EMAIL_REGEX.test(cleanEmail)) {
+    // Find and delete or set active: false
+    const subscriber = await Subscriber.findOneAndDelete({
+      email: trimmedEmail,
+    });
+
+    if (!subscriber) {
       return res
-        .status(400)
-        .json({ message: "Please provide a valid email address." });
+        .status(404)
+        .json({ message: "Email not found or already unsubscribed." });
     }
 
-    const subscriber = await Subscriber.findOne({ email: cleanEmail });
-
-    if (!subscriber || !subscriber.isActive) {
-      return res.status(404).json({
-        message: "This email address is not currently subscribed.",
-      });
+    // Optional: Trigger confirmation email
+    try {
+      await sendUnsubscribeEmail(trimmedEmail);
+    } catch (err) {
+      console.warn(
+        "Could not send unsubscribe confirmation email:",
+        err.message,
+      );
     }
 
-    subscriber.isActive = false;
-    await subscriber.save();
-
-    // Trigger unsubscribe confirmation email asynchronously
-    sendUnsubscribeEmail(cleanEmail).catch((err) =>
-      console.error("Failed to send unsubscribe email:", err.message),
-    );
-
-    return res.status(200).json({
+    return res.json({
       success: true,
       message: "You have been successfully unsubscribed.",
     });
   } catch (error) {
-    console.error("Error unsubscribing:", error);
-    return res.status(500).json({ message: "Server error. Please try again." });
+    console.error("Unsubscribe error:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to process unsubscribe request." });
   }
 });
 
